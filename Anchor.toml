@@ -1,0 +1,22 @@
+[features]
+seeds = false
+skip-lint = false
+
+[programs.localnet]
+solana_donate = "2BrmVZDuSQAynCzTW1er9ufTCBvVhzCiQ5TaQfHMfVUj"
+
+[programs.devnet]
+solana_donate = "2BrmVZDuSQAynCzTW1er9ufTCBvVhzCiQ5TaQfHMfVUj"
+
+[programs.mainnet]
+solana_donate = "2BrmVZDuSQAynCzTW1er9ufTCBvVhzCiQ5TaQfHMfVUj"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "https://mainnet.helius-rpc.com/?api-key=4b385796-cada-43ff-bd97-d54667dd5a5d"
+wallet = "/root/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

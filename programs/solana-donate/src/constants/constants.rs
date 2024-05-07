@@ -1,0 +1,5 @@
+pub const GLOBAL_STATE_SEED: &[u8] = b"GLOBAL-STATE-SEED";
+pub const DONATION_STATE_SEED: &[u8] = b"DONATION-STATE-SEED";
+pub const USER_STATE_SEED: &[u8] = b"USER-STATE-SEED";
+pub const VAULT_SEED: &[u8] = b"VAULT-SEED";
+pub const VAULT_STATE_SEED: &[u8] = b"VAULT-STATE-SEED";
