@@ -121,6 +121,7 @@ describe("solana_donate", () => {
   console.log(`pubkey2: ${keypair2.publicKey}`);
 
   let globalPDA = null;
+  let myGlobalPDA = null;
   let donationPDA0 = null;
   let donationPDA1 = null;
   let userPDA0 = null;
@@ -150,10 +151,10 @@ describe("solana_donate", () => {
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc();
-    console.log("Your transaction signature", tx);
+    console.log("Contract is initialied by owner", tx);
   });
 
-  it("Donation account 0 is initialized!", async () => {
+  it("Donation 0 is initialized!", async () => {
 
     donationPDA0 = await getDonationPDA(0);
     console.log(`Donation address: ${donationPDA0}`);
@@ -168,10 +169,10 @@ describe("solana_donate", () => {
       })
       .rpc();
 
-    console.log("Your transaction signature", tx);
+    console.log("Donation 0 is created by owner", tx);
   });
 
-  it("Donation account 1 is initialized!", async () => {
+  it("Donation 1 is initialized!", async () => {
     donationPDA1 = await getDonationPDA(1);
     console.log(`Donation address: ${donationPDA1}`);
 
@@ -185,9 +186,23 @@ describe("solana_donate", () => {
       })
       .rpc();
 
-    console.log("Your transaction signature", tx);
+    console.log("Donation 1 is created by owner", tx);
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
+  });
+
+  it("Donation 1 is updated!", async () => {
+    const tx = await program.methods
+      .updateDonation(1, new BN(0), HUNDRED, new BN(new Date(INIT_TIME).getTime() / 1000), new BN(new Date(DEAD_TIME).getTime() / 1000))
+      .accounts({
+        authority: myPubkey,
+        globalState: globalPDA,
+        donationInfo: donationPDA1,        
+        systemProgram: web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log("Donation 1 is updated by owner", tx);
   });
 
   it("Donation 0 joining", async () => {
@@ -210,7 +225,7 @@ describe("solana_donate", () => {
       .signers([keypair1])
       .rpc();
 
-    console.log("Your transaction signature", tx);
+    console.log("User 0 joined donation 0", tx);
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
 
@@ -228,13 +243,13 @@ describe("solana_donate", () => {
       .signers([keypair2])
       .rpc();
 
-    console.log("Your transaction signature", tx);
+    console.log("User 1 joined donation 0", tx);
     balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
   });
 
-  it("Donation 0 ended", async () => {
-    let myGlobalPDA = await getGlobalPDA(myKeypair.publicKey);
+  it("Donation 0 is disabled!", async () => {
+    myGlobalPDA = await getGlobalPDA(myKeypair.publicKey);
     console.log(`My global PDA: ${myGlobalPDA}`);
 
     let tx = await program.methods
@@ -248,7 +263,7 @@ describe("solana_donate", () => {
       })
       .signers([myKeypair])
       .rpc();
-    console.log("Your transaction signature", tx);
+    console.log("Another contract is initialized by dev", tx);
 
     tx = await program.methods
       .createDonation(new BN(0), new BN(0), new BN(new Date(INIT_TIME).getTime() / 1000), new BN(new Date(DEAD_TIME).getTime() / 1000))
@@ -261,10 +276,53 @@ describe("solana_donate", () => {
       .signers([myKeypair])
       .rpc();
 
-    console.log("Your transaction signature", tx);
+    console.log("Another donation 0 is created by dev", tx);
+
+    tx = await program.methods
+      .updateConfig(false)
+      .accounts({
+        authority: myPubkey,
+        globalState: globalPDA,
+        vaultState: vaultSPDA,        
+        systemProgram: web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log("Config is updated by dev", tx);
+
+    // tx = await program.methods
+    //   .endDonation(0, new BN(2000000000))
+    //   .accounts({
+    //     authority: myPubkey,
+    //     globalState: globalPDA,
+    //     donationInfo: donationPDA0,
+    //     vault: vaultPDA,
+    //     vaultState: vaultSPDA,
+    //     systemProgram: web3.SystemProgram.programId,
+    //   })
+    //   .rpc();
+
+    // console.log("Donation 0 is ended by owner", tx);
 
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
+  });
+
+  it("Donation 0 ended", async () => {  
+    let balance = await provider.connection.getBalance(vaultPDA);
+    console.log(`Vault balance: ${balance}`);
+
+    let tx = await program.methods
+      .updateConfig(true)
+      .accounts({
+        authority: myPubkey,
+        globalState: globalPDA,
+        vaultState: vaultSPDA,        
+        systemProgram: web3.SystemProgram.programId,
+      })
+      .rpc();
+
+  console.log("Config is updated by dev", tx);
 
     tx = await program.methods
       .endDonation(0, new BN(2000000000))
@@ -279,7 +337,8 @@ describe("solana_donate", () => {
       .signers([myKeypair])
       .rpc();
 
-    console.log("Your transaction signature", tx);
+    console.log("Donation 0 is ended by dev", tx);
+
     balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
   });
