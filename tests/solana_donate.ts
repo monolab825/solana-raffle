@@ -2,63 +2,41 @@ import * as anchor from "@project-serum/anchor";
 import { Program, web3, BN } from "@project-serum/anchor";
 import { SolanaDonate } from "../target/types/solana_donate";
 import { PublicKey } from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  MINT_SIZE,
-  createAssociatedTokenAccountInstruction,
-  getAssociatedTokenAddress,
-  createInitializeMintInstruction,
-  getAccount
-} from "@solana/spl-token"; 
-import { assert } from "chai";
-import { 
-  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID
-} from '@metaplex-foundation/mpl-token-metadata';
-import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
-
-// BAB metadata - https://gateway.pinata.cloud/ipfs/QmbYunxDx4cpsf8KWdmDyiS8E41HW1QdBDLww3HUAyUgPP?_gl=1*1fecquc*_ga*MjA5NDM1ODAyMy4xNjU4MzI5NzY1*_ga_5RMPXG14TE*MTY3NTQyNDMxNC40LjEuMTY3NTQyNTU2OS4zNS4wLjA.
 
 describe("solana_donate", () => {
   // Configure the client to use the local cluster.
-
-  anchor.setProvider(anchor.AnchorProvider.env());
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
 
   const program = anchor.workspace.SolanaDonate as Program<SolanaDonate>;
   const PROGRAM_ID = program.programId;
 
-  const WALLET_SEED = "WALLET_SEED";
-  const DONATION_SEED = "DONATION_SEED";
+  const GLOBAL_STATE_SEED = "GLOBAL_STATE_SEED";
+  const DONATION_STATE_SEED = "DONATION_STATE_SEED";
+  const USER_STATE_SEED = "USER_STATE_SEED";
+  const VAULT_SEED = "VAULT_SEED";
+  const VAULT_STATE_SEED = "VAULT_STATE_SEED";
 
-  const myWallet = anchor.AnchorProvider.env().wallet;
-  const payer = anchor.AnchorProvider.env().wallet as anchor.Wallet;
+  const myWallet = provider.wallet;
+  const payer = provider.wallet as anchor.Wallet;
   const myPubkey = myWallet.publicKey;
 
-  const pubkey1 = anchor.web3.Keypair.generate().publicKey;
-  const pubkey2 = anchor.web3.Keypair.generate().publicKey;
-  const TEN = new BN(10);
-  const ONE = new BN(1);
-  const TWO = new BN(2);
+  const myKeypair = anchor.web3.Keypair.generate();
+  const keypair1 = anchor.web3.Keypair.generate();
+  const keypair2 = anchor.web3.Keypair.generate();
 
-  const tokenTitle = "BuildABonkToken";
-  const tokenSymbol = "BAB";
-  const tokenUri = "https://gateway.pinata.cloud/ipfs/QmbYunxDx4cpsf8KWdmDyiS8E41HW1QdBDLww3HUAyUgPP?_gl=1*1fecquc*_ga*MjA5NDM1ODAyMy4xNjU4MzI5NzY1*_ga_5RMPXG14TE*MTY3NTQyNDMxNC40LjEuMTY3NTQyNTU2OS4zNS4wLjA.";
-  const quoteTokenTitle = "USDC";
-  const quoteTokenSymbol = "USDC";
-  const quoteTokenUri = "https://gateway.pinata.cloud/ipfs/QmW1YL2G1oY4RCHD78rhYJ15PP2Qo4Vd17wX2CmZpmn2vv?_gl=1*1wwza3w*_ga*MjA5NDM1ODAyMy4xNjU4MzI5NzY1*_ga_5RMPXG14TE*MTY3NjQ2MzgzOC43LjEuMTY3NjQ2Mzg0OS40OS4wLjA.";
+  const HUNDRED = new BN(100000000000);
+  const THOUSAND = new BN(1000000000000);
 
-  const mintKeypair: anchor.web3.Keypair = anchor.web3.Keypair.generate();
-  const bABTokenPubkey = new PublicKey("FTiEdZ1fjNGTaHDgc7uwzMVFTKx1eDpDxR57Uhg6M4aK");
-  const quoteTokenPubkey = new PublicKey("APaCo32kC5hkJVHotZv3uG3p3eZMCAvXRojqB9P7865v");
-  const MINT_DECIMALS = 10 ** 9;
+  const INIT_TIME = "2020-05-19T05:00:00-04:00";
+  const START_TIME = "2024-05-1T05:00:00-04:00";
+  const END_TIME = "2024-06-19T05:00:00-04:00";
+  const DEAD_TIME = "2024-12-31:00:00-04:00";
 
-  const recipientWallet: anchor.web3.Keypair = anchor.web3.Keypair.generate();
-  const donationAuthorityPubkey = myPubkey;
-
-
-  const getWalletPDA = async () => {
+  const getGlobalPDA = async (owner: PublicKey) => {
     return (
       await PublicKey.findProgramAddressSync(
-        [Buffer.from(WALLET_SEED), myPubkey.toBuffer()],
+        [Buffer.from(GLOBAL_STATE_SEED), owner.toBuffer()],
         PROGRAM_ID
       )
     )[0];
@@ -67,27 +45,108 @@ describe("solana_donate", () => {
   const getDonationPDA = async (donationIdentifier: number) => {
     return (
       await PublicKey.findProgramAddressSync(
-        [Buffer.from(DONATION_SEED), myPubkey.toBuffer(), Uint8Array.from([donationIdentifier])],
+        [Buffer.from(DONATION_STATE_SEED), Uint8Array.from([donationIdentifier])],
+        PROGRAM_ID
+      )
+    )[0];
+
+    // // Convert the u64 integer to a Buffer or Uint8Array of 8 bytes
+    // const idBuffer = Buffer.alloc(8);
+    // idBuffer.writeBigUInt64LE(BigInt(donationIdentifier)); // Using BigInt to handle u64
+
+    // // Combine the seeds with the idBuffer
+    // const seeds = [Buffer.from(DONATION_STATE_SEED), idBuffer];
+
+    // const [donationPDA] = await PublicKey.findProgramAddressSync(seeds, PROGRAM_ID);
+
+    // return donationPDA;
+  };
+
+  const getUserPDA = async (user: PublicKey, donationIdentifier: number) => {
+    return (
+      await PublicKey.findProgramAddressSync(
+        [Buffer.from(USER_STATE_SEED), user.toBuffer(), Uint8Array.from([donationIdentifier])],
+        PROGRAM_ID
+      )
+    )[0];
+
+    // // Convert the u64 integer to a Buffer or Uint8Array of 8 bytes
+    // const idBuffer = Buffer.alloc(8);
+    // idBuffer.writeBigUInt64LE(BigInt(donationIdentifier)); // Using BigInt to handle u64
+
+    // // Combine the seeds with the idBuffer
+    // const seeds = [Buffer.from(USER_STATE_SEED),  user.toBuffer(), idBuffer];
+
+    // const [userPDA] = await PublicKey.findProgramAddressSync(seeds, PROGRAM_ID);
+
+    // return userPDA;
+  };
+
+  const getVaultPDA = async () => {
+    return (
+      await PublicKey.findProgramAddressSync(
+        [Buffer.from(VAULT_SEED)],
         PROGRAM_ID
       )
     )[0];
   };
 
-  
+  const getVaultSPDA = async () => {
+    return (
+      await PublicKey.findProgramAddressSync(
+        [Buffer.from(VAULT_STATE_SEED)],
+        PROGRAM_ID
+      )
+    )[0];
+  };
+
+  const airdropSol = async (
+    provider: anchor.AnchorProvider,
+    target: PublicKey,
+    lamps: number
+  ): Promise<string> => {
+    try {
+      const sig: string = await provider.connection.requestAirdrop(target, lamps);
+      await provider.connection.confirmTransaction(sig);
+      return sig;
+    } catch (e) {
+      console.error("Airdrop failed:", e);
+      throw e;
+    }
+  };
 
   console.log(`My pubkey: ${myPubkey}`);
-  console.log(`pubkey1: ${pubkey1}`);
-  console.log(`pubkey2: ${pubkey2}`);
+  console.log(`pubkey0: ${myKeypair.publicKey}`);
+  console.log(`pubkey1: ${keypair1.publicKey}`);
+  console.log(`pubkey2: ${keypair2.publicKey}`);
 
-  it("Wallet account is initialized!", async () => {
-    const walletPDA = await getWalletPDA();
-    console.log(`Wallet account address: ${walletPDA}`);
+  let globalPDA = null;
+  let donationPDA0 = null;
+  let donationPDA1 = null;
+  let userPDA0 = null;
+  let userPDA1 = null;
+  let vaultPDA = null;
+  let vaultSPDA = null;
+
+  it("Global account is initialized!", async () => {
+    globalPDA = await getGlobalPDA(myPubkey);
+    vaultPDA = await getVaultPDA();
+    vaultSPDA = await getVaultSPDA();
+    console.log(`globalPDA: ${globalPDA}`);
+    console.log(`vaultPDA: ${vaultPDA}`);
+    console.log(`vaultSPDA: ${vaultSPDA}`);
+
+    await airdropSol(provider, myKeypair.publicKey, 100000000000);
+    await airdropSol(provider, keypair1.publicKey, 10000000000);
+    await airdropSol(provider, keypair2.publicKey, 10000000000);
 
     const tx = await program.methods
-      .initializeWallet( )
+      .initialize()
       .accounts({
-        walletDetails: walletPDA,
         authority: myPubkey,
+        globalState: globalPDA,
+        vault: vaultPDA,
+        vaultState: vaultSPDA,
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc();
@@ -96,393 +155,132 @@ describe("solana_donate", () => {
 
   it("Donation account 0 is initialized!", async () => {
 
-    const walletPDA = await getWalletPDA();
-    const donationPDA = await getDonationPDA( 0 );
-    console.log(`Wallet address: ${walletPDA}`);
-    console.log(`Donation address: ${donationPDA}`);
+    donationPDA0 = await getDonationPDA(0);
+    console.log(`Donation address: ${donationPDA0}`);
 
     const tx = await program.methods
-      .CreateDonation( pubkey1, pubkey2, TEN, ONE, TWO )
+      .createDonation(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
       .accounts({
-        walletDetails: walletPDA,
-        donationDetails: donationPDA,
         authority: myPubkey,
+        globalState: globalPDA,
+        donationInfo: donationPDA0,        
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc();
 
     console.log("Your transaction signature", tx);
   });
+
   it("Donation account 1 is initialized!", async () => {
-
-    const walletPDA = await getWalletPDA();
-    const donationPDA = await getDonationPDA( 1 );
-    console.log(`Wallet address: ${walletPDA}`);
-    console.log(`Donation address: ${donationPDA}`);
+    donationPDA1 = await getDonationPDA(1);
+    console.log(`Donation address: ${donationPDA1}`);
 
     const tx = await program.methods
-      .CreateDonation( pubkey1, pubkey2, TEN, ONE, TWO )
+      .createDonation(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
       .accounts({
-        walletDetails: walletPDA,
-        donationDetails: donationPDA,
         authority: myPubkey,
+        globalState: globalPDA,
+        donationInfo: donationPDA1,        
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc();
 
     console.log("Your transaction signature", tx);
+    let balance = await provider.connection.getBalance(vaultPDA);
+    console.log(`Vault balance: ${balance}`);
   });
 
-  it("Edited donation account 1!", async () => {
+  it("Donation 0 joining", async () => {
+    userPDA0 = await getUserPDA(keypair1.publicKey, 0);
+    userPDA1 = await getUserPDA(keypair2.publicKey, 0);
+    console.log(`User address 0: ${userPDA0}`);
+    console.log(`User address 1: ${userPDA1}`);
 
-    const donationPDA = await getDonationPDA( 1 );
-    console.log(`Donation address: ${donationPDA}`);
-
-    const tx = await program.methods
-      .editDonation( 1, pubkey1, pubkey2, ONE, ONE, TEN )
+    let tx = await program.methods
+      .joinDonation(0, new BN(1000000000))
       .accounts({
-        donationDetails: donationPDA,
-        authority: myPubkey
+        user: keypair1.publicKey,
+        authority: myPubkey,
+        globalState: globalPDA,
+        donationInfo: donationPDA0,
+        userInfo: userPDA0,
+        vault: vaultPDA,
+        systemProgram: web3.SystemProgram.programId,
       })
+      .signers([keypair1])
       .rpc();
 
     console.log("Your transaction signature", tx);
-  });
+    let balance = await provider.connection.getBalance(vaultPDA);
+    console.log(`Vault balance: ${balance}`);
 
-  it("Got accounts!", async () => {
-
-    const walletPDA = await getWalletPDA();
-    const donationPDA = await getDonationPDA( 1 );
-    console.log(`Donation address: ${donationPDA}`);
-
-    const walletAccounts = await program.account.walletDetails.all();
-    const donationAccounts = await program.account.donationDetails.all();
-    const donationAccount = await program.account.donationDetails.fetch(donationPDA);
-    const allAccounts = await program.account;
-
-    // const todoAccounts = await program.account.todoAccount.all([authorFilter(publicKey.toString())])
-
-    // const incompleteTodos = useMemo(() => todos.filter((todo) => !todo.account.marked), [todos])
-    // const completedTodos = useMemo(() => todos.filter((todo) => todo.account.marked), [todos])
-
-    console.log(walletAccounts);
-    console.log(donationAccounts);
-    console.log(allAccounts);
-
-  });
-
-  /*
-
-  it("Create an SPL Token!", async () => {
-
-    const metadataAddress = (await anchor.web3.PublicKey.findProgramAddress(
-      [
-        Buffer.from("metadata"),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        mintKeypair.publicKey.toBuffer(),
-      ],
-      TOKEN_METADATA_PROGRAM_ID
-    ))[0];
-
-    const sx = await program.methods.createToken(
-      quoteTokenTitle, quoteTokenSymbol, quoteTokenUri
-    )
+    tx = await program.methods
+      .joinDonation(0, new BN(1000000000))
       .accounts({
-        metadataAccount: metadataAddress,
-        mintAccount: mintKeypair.publicKey,
-        mintAuthority: payer.publicKey,
-        payer: payer.publicKey,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        user: keypair2.publicKey,
+        authority: myPubkey,
+        globalState: globalPDA,
+        donationInfo: donationPDA0,
+        userInfo: userPDA1,
+        vault: vaultPDA,
+        systemProgram: web3.SystemProgram.programId,
       })
-      .signers([mintKeypair, payer.payer])
+      .signers([keypair2])
       .rpc();
 
-    console.log("Success!");
-        console.log(`   Mint Address: ${mintKeypair.publicKey}`);
-        console.log(`   Tx Signature: ${sx}`);
+    console.log("Your transaction signature", tx);
+    balance = await provider.connection.getBalance(vaultPDA);
+    console.log(`Vault balance: ${balance}`);
   });
 
-  it("Mint some tokens to your wallet!", async () => {
+  it("Donation 0 ended", async () => {
+    let myGlobalPDA = await getGlobalPDA(myKeypair.publicKey);
+    console.log(`My global PDA: ${myGlobalPDA}`);
 
-    const associatedTokenAccountAddress = await anchor.utils.token.associatedAddress({
-      mint: mintKeypair.publicKey,
-      owner: payer.publicKey,
-    });
-
-    const sx = await program.methods.mintTo(
-      new anchor.BN(150)
-    )
+    let tx = await program.methods
+      .initialize()
       .accounts({
-        associatedTokenAccount: associatedTokenAccountAddress,
-        mintAccount: mintKeypair.publicKey,
-        mintAuthority: payer.publicKey,
-        payer: payer.publicKey,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+        authority: myKeypair.publicKey,
+        globalState: myGlobalPDA,
+        vault: vaultPDA,
+        vaultState: vaultSPDA,
+        systemProgram: web3.SystemProgram.programId,
       })
-      .signers([payer.payer])
+      .signers([myKeypair])
+      .rpc();
+    console.log("Your transaction signature", tx);
+
+    tx = await program.methods
+      .createDonation(new BN(0), new BN(0), new BN(new Date(INIT_TIME).getTime() / 1000), new BN(new Date(DEAD_TIME).getTime() / 1000))
+      .accounts({
+        authority: myKeypair.publicKey,
+        globalState: myGlobalPDA,
+        donationInfo: donationPDA0,        
+        systemProgram: web3.SystemProgram.programId,
+      })
+      .signers([myKeypair])
       .rpc();
 
-    console.log("Success!");
-        console.log(`   Mint Address: ${mintKeypair.publicKey}`);
-        console.log(`   Tx Signature: ${sx}`);
-  });
-  */
+    console.log("Your transaction signature", tx);
 
-  it("Mint 1M BAB tokens to your wallet!", async () => {
+    let balance = await provider.connection.getBalance(vaultPDA);
+    console.log(`Vault balance: ${balance}`);
 
-    const associatedTokenAccountAddress = await anchor.utils.token.associatedAddress({
-      mint: bABTokenPubkey,
-      owner: payer.publicKey,
-    });
-
-    const tx = await program.methods.mintTo(
-      new anchor.BN(1000000 * MINT_DECIMALS)
-    )
-    .accounts({
-      associatedTokenAccount: associatedTokenAccountAddress,
-      mintAccount: bABTokenPubkey,
-      mintAuthority: payer.publicKey,
-      payer: payer.publicKey,
-      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
-    })
-    .signers([payer.payer])
-    .rpc();
-
-    console.log("Success!");
-        console.log(`   Mint Address: ${bABTokenPubkey}`);
-        console.log(`   Your BAB Token ATA: ${associatedTokenAccountAddress}`)
-        console.log(`   Tx Signature: ${tx}`);
-  });
-
-  it("Mint 1M USDC tokens to your wallet!", async () => {
-
-    const associatedTokenAccountAddress = await anchor.utils.token.associatedAddress({
-      mint: quoteTokenPubkey,
-      owner: payer.publicKey,
-    });
-
-    const tx = await program.methods.mintTo(
-      new anchor.BN(1000000 * MINT_DECIMALS)
-    )
-    .accounts({
-      associatedTokenAccount: associatedTokenAccountAddress,
-      mintAccount: quoteTokenPubkey,
-      mintAuthority: payer.publicKey,
-      payer: payer.publicKey,
-      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
-    })
-    .signers([payer.payer])
-    .rpc();
-
-    console.log("Success!");
-        console.log(`   Mint Address: ${quoteTokenPubkey}`);
-        console.log(`   Your USDC Token ATA: ${associatedTokenAccountAddress}`)
-        console.log(`   Tx Signature: ${tx}`);
-  });
-
-  it("Deposit tokens to donation PDA 1!", async () => {
-
-    const donationPDA = await getDonationPDA( 1 );
-
-    console.log(`Donation address: ${donationPDA}`);
-
-    console.log( `Mint: ${bABTokenPubkey}`)
-
-    const fromAssociatedTokenAccountAddress = await anchor.utils.token.associatedAddress({
-      mint: bABTokenPubkey,
-      owner: payer.publicKey,
-    });
-
-    console.log(`From: ${fromAssociatedTokenAccountAddress}`);
-
-    const toAssociatedTokenAccountAddress = await anchor.utils.token.associatedAddress({
-      mint: bABTokenPubkey,
-      owner: donationPDA,
-    });
-
-    console.log(`To: ${toAssociatedTokenAccountAddress}`);
-
-    const sx = await program.methods.depositDonationTokens(
-      new anchor.BN(150 * MINT_DECIMALS),
-      1
-    )
-    .accounts({
-      mintAccount: bABTokenPubkey,
-      fromAssociatedTokenAccount: fromAssociatedTokenAccountAddress,
-      fromAuthority: payer.publicKey,
-      toAssociatedTokenAccount: toAssociatedTokenAccountAddress,
-      donationDetailsPda: donationPDA,
-      payer: payer.publicKey,
-      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
-    })
-    .signers([payer.payer])
-    .rpc();
-
-    console.log("Success!");
-        console.log(`   Mint Address: ${bABTokenPubkey}`);
-        console.log(`   Tx Signature: ${sx}`);
-  });
-
-  it("Withdraw tokens from donation PDA 1!", async () => {
-
-    const donationPDA = await getDonationPDA( 1 );
-
-    console.log(`Donation address: ${donationPDA}`);
-
-    console.log( `Mint: ${bABTokenPubkey}`)
-
-    const fromAssociatedTokenAccountAddress = await anchor.utils.token.associatedAddress({
-      mint: bABTokenPubkey,
-      owner: donationPDA,
-    });
-
-    console.log(`From: ${fromAssociatedTokenAccountAddress}`);
-
-    const toAssociatedTokenAccountAddress = await anchor.utils.token.associatedAddress({
-      mint: bABTokenPubkey,
-      owner: payer.publicKey,
-    });
-
-    console.log(`To: ${toAssociatedTokenAccountAddress}`);
-
-    const sx = await program.methods.withdrawDonationTokens(
-      new anchor.BN(150 * MINT_DECIMALS),
-      1
-    )
-    .accounts({
-      donationDetailsPda: donationPDA,
-      mintAccount: bABTokenPubkey,
-      donationAssociatedTokenAccount: fromAssociatedTokenAccountAddress,
-      toAssociatedTokenAccount: toAssociatedTokenAccountAddress,
-      recipient: payer.publicKey,
-      authority: payer.publicKey,
-      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
-    })
-    .signers([payer.payer])
-    .rpc({skipPreflight: true});
-
-    console.log("Success!");
-        console.log(`   Mint Address: ${bABTokenPubkey}`);
-        console.log(`   Tx Signature: ${sx}`);
-  });
-
-
-  it("Buy tokens from donation 1!", async () => {
-
-    const donationPDA = await getDonationPDA( 1 );
-
-    console.log(`Donation address: ${donationPDA}`);
-
-    console.log( `Donation token mint: ${bABTokenPubkey}`);
-    console.log( `Quote token mint: ${quoteTokenPubkey}`);
-
-    // Quote token ATAs
-
-    const buyerQuoteTokenAssociatedTokenAccount = await anchor.utils.token.associatedAddress({
-      mint: quoteTokenPubkey,
-      owner: myPubkey,
-    });
-    const donationQuoteTokenAssociatedTokenAccount = await anchor.utils.token.associatedAddress({
-      mint: quoteTokenPubkey,
-      owner: donationPDA,
-    });
-
-    // Donation token ATAs
-
-    const buyerDonationTokenAssociatedTokenAccount = await anchor.utils.token.associatedAddress({
-      mint: bABTokenPubkey,
-      owner: myPubkey,
-    });
-    const donationDonationTokenAssociatedTokenAccount = await anchor.utils.token.associatedAddress({
-      mint: bABTokenPubkey,
-      owner: donationPDA,
-    });
-
-
-    const sx = await program.methods.buyDonationTokens(
-      new anchor.BN(150 * MINT_DECIMALS),
-      1,
-      donationAuthorityPubkey
-    )
-    .accounts({
-      quoteTokenMintAccount: quoteTokenPubkey,
-      buyerQuoteTokenAssociatedTokenAccount: buyerQuoteTokenAssociatedTokenAccount,
-      donationQuoteTokenAssociatedTokenAccount: donationQuoteTokenAssociatedTokenAccount,
-      donationTokenMintAccount: bABTokenPubkey,
-      buyerDonationTokenAssociatedTokenAccount: buyerDonationTokenAssociatedTokenAccount,
-      donationDonationTokenAssociatedTokenAccount: donationDonationTokenAssociatedTokenAccount,
-      donationDetailsPda: donationPDA,
-      buyerAuthority: payer.publicKey,
-      buyer: payer.publicKey,
-      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
-    })
-    .signers([payer.payer])
-    .rpc();
-
-    console.log("Success!");
-    console.log(`   Tx Signature: ${sx}`);
-  });
-
-  /*
-
-  it("Transfer some tokens to another wallet!", async () => {
-
-    const fromAssociatedTokenAccountAddress = await anchor.utils.token.associatedAddress({
-      mint: bABTokenPubkey,
-      owner: payer.publicKey,
-    });
-    const toAssociatedTokenAccountAddress = await anchor.utils.token.associatedAddress({
-      mint: bABTokenPubkey,
-      owner: recipientWallet.publicKey,
-    });
-
-    const sx = await program.methods.transferTokens(
-      new anchor.BN(150 * MINT_DECIMALS)
-    )
+    tx = await program.methods
+      .endDonation(0, new BN(2000000000))
       .accounts({
-        mintAccount: bABTokenPubkey,
-        fromAssociatedTokenAccount: fromAssociatedTokenAccountAddress,
-        owner: payer.publicKey,
-        toAssociatedTokenAccount: toAssociatedTokenAccountAddress,
-        recipient: recipientWallet.publicKey,
-        payer: payer.publicKey,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+        authority: myKeypair.publicKey,
+        globalState: myGlobalPDA,
+        donationInfo: donationPDA0,
+        vault: vaultPDA,
+        vaultState: vaultSPDA,
+        systemProgram: web3.SystemProgram.programId,
       })
-      .signers([payer.payer])
+      .signers([myKeypair])
       .rpc();
 
-    console.log("Success!");
-        console.log(`   Mint Address: ${bABTokenPubkey}`);
-        console.log(`   Tx Signature: ${sx}`);
+    console.log("Your transaction signature", tx);
+    balance = await provider.connection.getBalance(vaultPDA);
+    console.log(`Vault balance: ${balance}`);
   });
-  */
-
-
-
-
-  
 });

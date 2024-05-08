@@ -18,7 +18,7 @@ pub struct CreateDonation<'info> {
     pub global_state: Account<'info, GlobalState>,
 
     #[account(
-        init,
+        init_if_needed,
         seeds = [DONATION_STATE_SEED, &global_state.donation_stage.to_le_bytes()],
         bump,
         space = 8 + std::mem::size_of::<DonationInfo>(),

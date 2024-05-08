@@ -49,7 +49,8 @@ pub struct EndDonation<'info> {
 }
 
 pub fn handle(
-    ctx: Context<EndDonation>, 
+    ctx: Context<EndDonation>,
+    _identifier: u8,
     amount: u64
 ) -> Result<()> {
     let accts = ctx.accounts;
@@ -69,6 +70,10 @@ pub fn handle(
         ],
         &[&[VAULT_SEED, &[ctx.bumps.vault]]],
     )?;
+
+    msg!(
+        "Donated ended"
+    );
 
     Ok(())
 }

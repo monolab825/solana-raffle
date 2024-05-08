@@ -3,19 +3,13 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-solana_donate = "2BrmVZDuSQAynCzTW1er9ufTCBvVhzCiQ5TaQfHMfVUj"
-
-[programs.devnet]
-solana_donate = "2BrmVZDuSQAynCzTW1er9ufTCBvVhzCiQ5TaQfHMfVUj"
-
-[programs.mainnet]
-solana_donate = "2BrmVZDuSQAynCzTW1er9ufTCBvVhzCiQ5TaQfHMfVUj"
+solana_donate = "G2tD9mUeKEQEfdTMseQqgxK7JrGB4DaJVbWZoYfRFgGK"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "https://mainnet.helius-rpc.com/?api-key=4b385796-cada-43ff-bd97-d54667dd5a5d"
+cluster = "Localnet"
 wallet = "/root/.config/solana/id.json"
 
 [scripts]

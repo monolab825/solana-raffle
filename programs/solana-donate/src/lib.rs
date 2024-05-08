@@ -7,7 +7,7 @@ pub mod instructions;
 
 use instructions::*;
 
-declare_id!("2BrmVZDuSQAynCzTW1er9ufTCBvVhzCiQ5TaQfHMfVUj");
+declare_id!("G2tD9mUeKEQEfdTMseQqgxK7JrGB4DaJVbWZoYfRFgGK");
 #[program]
 pub mod solana_donate {
     use super::*;
@@ -72,10 +72,12 @@ pub mod solana_donate {
 
     pub fn end_donation(
         ctx: Context<EndDonation>,
+        _identifier: u8,
         amount: u64
     ) -> Result<()> {
         end_donation::handle(
             ctx,
+            _identifier,
             amount
         )
     }
