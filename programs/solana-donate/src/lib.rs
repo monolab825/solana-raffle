@@ -7,7 +7,7 @@ pub mod instructions;
 
 use instructions::*;
 
-declare_id!("G2tD9mUeKEQEfdTMseQqgxK7JrGB4DaJVbWZoYfRFgGK");
+declare_id!("2uo8tSaQNN1zWrPrZMsFtfFzzvXn7MkorwJfrVinH6Vh");
 #[program]
 pub mod solana_donate {
     use super::*;
