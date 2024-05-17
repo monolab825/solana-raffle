@@ -3,7 +3,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-solana_donate = "2uo8tSaQNN1zWrPrZMsFtfFzzvXn7MkorwJfrVinH6Vh"
+solana_donate = "5FUbwgKyrnjHx5e3YTe5X8AJRQPdDvb4DmyMUkCc7US3"
 
 [registry]
 url = "https://anchor.projectserum.com"

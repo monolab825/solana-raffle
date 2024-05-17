@@ -124,6 +124,8 @@ describe("solana_donate", () => {
   let myGlobalPDA = null;
   let donationPDA0 = null;
   let donationPDA1 = null;
+  let donationPDA2 = null;
+  let donationPDA3 = null;
   let userPDA0 = null;
   let userPDA1 = null;
   let vaultPDA = null;
@@ -155,7 +157,6 @@ describe("solana_donate", () => {
   });
 
   it("Donation 0 is initialized!", async () => {
-
     donationPDA0 = await getDonationPDA(0);
     console.log(`Donation address: ${donationPDA0}`);
 
@@ -170,6 +171,9 @@ describe("solana_donate", () => {
       .rpc();
 
     console.log("Donation 0 is created by owner", tx);
+
+    const globalInfo = await program.account.globalState.fetchNullable(globalPDA) as any;
+    console.log(`globalInfo: ${globalInfo.donationStage}`);
   });
 
   it("Donation 1 is initialized!", async () => {
@@ -189,6 +193,53 @@ describe("solana_donate", () => {
     console.log("Donation 1 is created by owner", tx);
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
+
+    const globalInfo = await program.account.globalState.fetchNullable(globalPDA) as any;
+    console.log(`globalInfo: ${globalInfo.donationStage}`);
+  });
+
+  it("Donation 2 is initialized!", async () => {
+    donationPDA2 = await getDonationPDA(2);
+    console.log(`Donation address: ${donationPDA2}`);
+
+    const tx = await program.methods
+      .createDonation(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
+      .accounts({
+        authority: myPubkey,
+        globalState: globalPDA,
+        donationInfo: donationPDA2,        
+        systemProgram: web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log("Donation 2 is created by owner", tx);
+    let balance = await provider.connection.getBalance(vaultPDA);
+    console.log(`Vault balance: ${balance}`);
+
+    const globalInfo = await program.account.globalState.fetchNullable(globalPDA) as any;
+    console.log(`globalInfo: ${globalInfo.donationStage}`);
+  });
+
+  it("Donation 3 is initialized!", async () => {
+    donationPDA3 = await getDonationPDA(3);
+    console.log(`Donation address: ${donationPDA3}`);
+
+    const tx = await program.methods
+      .createDonation(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
+      .accounts({
+        authority: myPubkey,
+        globalState: globalPDA,
+        donationInfo: donationPDA3,        
+        systemProgram: web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log("Donation 3 is created by owner", tx);
+    let balance = await provider.connection.getBalance(vaultPDA);
+    console.log(`Vault balance: ${balance}`);
+
+    const globalInfo = await program.account.globalState.fetchNullable(globalPDA) as any;
+    console.log(`globalInfo: ${globalInfo.donationStage}`);
   });
 
   it("Donation 1 is updated!", async () => {
