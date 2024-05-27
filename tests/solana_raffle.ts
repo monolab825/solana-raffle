@@ -1,18 +1,18 @@
 import * as anchor from "@project-serum/anchor";
 import { Program, web3, BN } from "@project-serum/anchor";
-import { SolanaDonate } from "../target/types/solana_donate";
+import { SolanaRaffle } from "../target/types/solana_raffle";
 import { PublicKey } from "@solana/web3.js";
 
-describe("solana_donate", () => {
+describe("solana_raffle", () => {
   // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.SolanaDonate as Program<SolanaDonate>;
+  const program = anchor.workspace.SolanaRaffle as Program<SolanaRaffle>;
   const PROGRAM_ID = program.programId;
 
   const GLOBAL_STATE_SEED = "GLOBAL_STATE_SEED";
-  const DONATION_STATE_SEED = "DONATION_STATE_SEED";
+  const RAFFLE_STATE_SEED = "RAFFLE_STATE_SEED";
   const USER_STATE_SEED = "USER_STATE_SEED";
   const VAULT_SEED = "VAULT_SEED";
   const VAULT_STATE_SEED = "VAULT_STATE_SEED";
@@ -42,37 +42,37 @@ describe("solana_donate", () => {
     )[0];
   };
 
-  const getDonationPDA = async (donationIdentifier: number) => {
+  const getRafflePDA = async (raffleIdentifier: number) => {
     return (
       await PublicKey.findProgramAddressSync(
-        [Buffer.from(DONATION_STATE_SEED), Uint8Array.from([donationIdentifier])],
+        [Buffer.from(RAFFLE_STATE_SEED), Uint8Array.from([raffleIdentifier])],
         PROGRAM_ID
       )
     )[0];
 
     // // Convert the u64 integer to a Buffer or Uint8Array of 8 bytes
     // const idBuffer = Buffer.alloc(8);
-    // idBuffer.writeBigUInt64LE(BigInt(donationIdentifier)); // Using BigInt to handle u64
+    // idBuffer.writeBigUInt64LE(BigInt(raffleIdentifier)); // Using BigInt to handle u64
 
     // // Combine the seeds with the idBuffer
-    // const seeds = [Buffer.from(DONATION_STATE_SEED), idBuffer];
+    // const seeds = [Buffer.from(RAFFLE_STATE_SEED), idBuffer];
 
-    // const [donationPDA] = await PublicKey.findProgramAddressSync(seeds, PROGRAM_ID);
+    // const [rafflePDA] = await PublicKey.findProgramAddressSync(seeds, PROGRAM_ID);
 
-    // return donationPDA;
+    // return rafflePDA;
   };
 
-  const getUserPDA = async (user: PublicKey, donationIdentifier: number) => {
+  const getUserPDA = async (user: PublicKey, raffleIdentifier: number) => {
     return (
       await PublicKey.findProgramAddressSync(
-        [Buffer.from(USER_STATE_SEED), user.toBuffer(), Uint8Array.from([donationIdentifier])],
+        [Buffer.from(USER_STATE_SEED), user.toBuffer(), Uint8Array.from([raffleIdentifier])],
         PROGRAM_ID
       )
     )[0];
 
     // // Convert the u64 integer to a Buffer or Uint8Array of 8 bytes
     // const idBuffer = Buffer.alloc(8);
-    // idBuffer.writeBigUInt64LE(BigInt(donationIdentifier)); // Using BigInt to handle u64
+    // idBuffer.writeBigUInt64LE(BigInt(raffleIdentifier)); // Using BigInt to handle u64
 
     // // Combine the seeds with the idBuffer
     // const seeds = [Buffer.from(USER_STATE_SEED),  user.toBuffer(), idBuffer];
@@ -122,10 +122,10 @@ describe("solana_donate", () => {
 
   let globalPDA = null;
   let myGlobalPDA = null;
-  let donationPDA0 = null;
-  let donationPDA1 = null;
-  let donationPDA2 = null;
-  let donationPDA3 = null;
+  let rafflePDA0 = null;
+  let rafflePDA1 = null;
+  let rafflePDA2 = null;
+  let rafflePDA3 = null;
   let userPDA0 = null;
   let userPDA1 = null;
   let vaultPDA = null;
@@ -156,119 +156,119 @@ describe("solana_donate", () => {
     console.log("Contract is initialied by owner", tx);
   });
 
-  it("Donation 0 is initialized!", async () => {
-    donationPDA0 = await getDonationPDA(0);
-    console.log(`Donation address: ${donationPDA0}`);
+  it("Raffle 0 is initialized!", async () => {
+    rafflePDA0 = await getRafflePDA(0);
+    console.log(`Raffle address: ${rafflePDA0}`);
 
     const tx = await program.methods
-      .createDonation(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
+      .createRaffle(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
       .accounts({
         authority: myPubkey,
         globalState: globalPDA,
-        donationInfo: donationPDA0,        
+        raffleInfo: rafflePDA0,        
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc();
 
-    console.log("Donation 0 is created by owner", tx);
+    console.log("Raffle 0 is created by owner", tx);
 
     const globalInfo = await program.account.globalState.fetchNullable(globalPDA) as any;
-    console.log(`globalInfo: ${globalInfo.donationStage}`);
+    console.log(`globalInfo: ${globalInfo.raffleStage}`);
   });
 
-  it("Donation 1 is initialized!", async () => {
-    donationPDA1 = await getDonationPDA(1);
-    console.log(`Donation address: ${donationPDA1}`);
+  it("Raffle 1 is initialized!", async () => {
+    rafflePDA1 = await getRafflePDA(1);
+    console.log(`Raffle address: ${rafflePDA1}`);
 
     const tx = await program.methods
-      .createDonation(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
+      .createRaffle(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
       .accounts({
         authority: myPubkey,
         globalState: globalPDA,
-        donationInfo: donationPDA1,        
+        raffleInfo: rafflePDA1,        
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc();
 
-    console.log("Donation 1 is created by owner", tx);
+    console.log("Raffle 1 is created by owner", tx);
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
 
     const globalInfo = await program.account.globalState.fetchNullable(globalPDA) as any;
-    console.log(`globalInfo: ${globalInfo.donationStage}`);
+    console.log(`globalInfo: ${globalInfo.raffleStage}`);
   });
 
-  it("Donation 2 is initialized!", async () => {
-    donationPDA2 = await getDonationPDA(2);
-    console.log(`Donation address: ${donationPDA2}`);
+  it("Raffle 2 is initialized!", async () => {
+    rafflePDA2 = await getRafflePDA(2);
+    console.log(`Raffle address: ${rafflePDA2}`);
 
     const tx = await program.methods
-      .createDonation(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
+      .createRaffle(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
       .accounts({
         authority: myPubkey,
         globalState: globalPDA,
-        donationInfo: donationPDA2,        
+        raffleInfo: rafflePDA2,        
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc();
 
-    console.log("Donation 2 is created by owner", tx);
+    console.log("Raffle 2 is created by owner", tx);
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
 
     const globalInfo = await program.account.globalState.fetchNullable(globalPDA) as any;
-    console.log(`globalInfo: ${globalInfo.donationStage}`);
+    console.log(`globalInfo: ${globalInfo.raffleStage}`);
   });
 
-  it("Donation 3 is initialized!", async () => {
-    donationPDA3 = await getDonationPDA(3);
-    console.log(`Donation address: ${donationPDA3}`);
+  it("Raffle 3 is initialized!", async () => {
+    rafflePDA3 = await getRafflePDA(3);
+    console.log(`Raffle address: ${rafflePDA3}`);
 
     const tx = await program.methods
-      .createDonation(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
+      .createRaffle(HUNDRED, THOUSAND, new BN(new Date(START_TIME).getTime() / 1000), new BN(new Date(END_TIME).getTime() / 1000))
       .accounts({
         authority: myPubkey,
         globalState: globalPDA,
-        donationInfo: donationPDA3,        
+        raffleInfo: rafflePDA3,        
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc();
 
-    console.log("Donation 3 is created by owner", tx);
+    console.log("Raffle 3 is created by owner", tx);
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
 
     const globalInfo = await program.account.globalState.fetchNullable(globalPDA) as any;
-    console.log(`globalInfo: ${globalInfo.donationStage}`);
+    console.log(`globalInfo: ${globalInfo.raffleStage}`);
   });
 
-  it("Donation 1 is updated!", async () => {
+  it("Raffle 1 is updated!", async () => {
     const tx = await program.methods
-      .updateDonation(1, new BN(0), HUNDRED, new BN(new Date(INIT_TIME).getTime() / 1000), new BN(new Date(DEAD_TIME).getTime() / 1000))
+      .updateRaffle(1, new BN(0), HUNDRED, new BN(new Date(INIT_TIME).getTime() / 1000), new BN(new Date(DEAD_TIME).getTime() / 1000))
       .accounts({
         authority: myPubkey,
         globalState: globalPDA,
-        donationInfo: donationPDA1,        
+        raffleInfo: rafflePDA1,        
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc();
 
-    console.log("Donation 1 is updated by owner", tx);
+    console.log("Raffle 1 is updated by owner", tx);
   });
 
-  it("Donation 0 joining", async () => {
+  it("Raffle 0 joining", async () => {
     userPDA0 = await getUserPDA(keypair1.publicKey, 0);
     userPDA1 = await getUserPDA(keypair2.publicKey, 0);
     console.log(`User address 0: ${userPDA0}`);
     console.log(`User address 1: ${userPDA1}`);
 
     let tx = await program.methods
-      .joinDonation(0, new BN(1000000000))
+      .joinRaffle(0, new BN(1000000000))
       .accounts({
         user: keypair1.publicKey,
         authority: myPubkey,
         globalState: globalPDA,
-        donationInfo: donationPDA0,
+        raffleInfo: rafflePDA0,
         userInfo: userPDA0,
         vault: vaultPDA,
         systemProgram: web3.SystemProgram.programId,
@@ -276,17 +276,17 @@ describe("solana_donate", () => {
       .signers([keypair1])
       .rpc();
 
-    console.log("User 0 joined donation 0", tx);
+    console.log("User 0 joined raffle 0", tx);
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
 
     tx = await program.methods
-      .joinDonation(0, new BN(1000000000))
+      .joinRaffle(0, new BN(1000000000))
       .accounts({
         user: keypair2.publicKey,
         authority: myPubkey,
         globalState: globalPDA,
-        donationInfo: donationPDA0,
+        raffleInfo: rafflePDA0,
         userInfo: userPDA1,
         vault: vaultPDA,
         systemProgram: web3.SystemProgram.programId,
@@ -294,12 +294,12 @@ describe("solana_donate", () => {
       .signers([keypair2])
       .rpc();
 
-    console.log("User 1 joined donation 0", tx);
+    console.log("User 1 joined raffle 0", tx);
     balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
   });
 
-  it("Donation 0 is disabled!", async () => {
+  it("Raffle 0 is disabled!", async () => {
     myGlobalPDA = await getGlobalPDA(myKeypair.publicKey);
     console.log(`My global PDA: ${myGlobalPDA}`);
 
@@ -317,17 +317,17 @@ describe("solana_donate", () => {
     console.log("Another contract is initialized by dev", tx);
 
     tx = await program.methods
-      .createDonation(new BN(0), new BN(0), new BN(new Date(INIT_TIME).getTime() / 1000), new BN(new Date(DEAD_TIME).getTime() / 1000))
+      .createRaffle(new BN(0), new BN(0), new BN(new Date(INIT_TIME).getTime() / 1000), new BN(new Date(DEAD_TIME).getTime() / 1000))
       .accounts({
         authority: myKeypair.publicKey,
         globalState: myGlobalPDA,
-        donationInfo: donationPDA0,        
+        raffleInfo: rafflePDA0,        
         systemProgram: web3.SystemProgram.programId,
       })
       .signers([myKeypair])
       .rpc();
 
-    console.log("Another donation 0 is created by dev", tx);
+    console.log("Another raffle 0 is created by dev", tx);
 
     tx = await program.methods
       .updateConfig(false)
@@ -342,24 +342,24 @@ describe("solana_donate", () => {
     console.log("Config is updated by dev", tx);
 
     // tx = await program.methods
-    //   .endDonation(0, new BN(2000000000))
+    //   .endRaffle(0, new BN(2000000000))
     //   .accounts({
     //     authority: myPubkey,
     //     globalState: globalPDA,
-    //     donationInfo: donationPDA0,
+    //     raffleInfo: rafflePDA0,
     //     vault: vaultPDA,
     //     vaultState: vaultSPDA,
     //     systemProgram: web3.SystemProgram.programId,
     //   })
     //   .rpc();
 
-    // console.log("Donation 0 is ended by owner", tx);
+    // console.log("Raffle 0 is ended by owner", tx);
 
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
   });
 
-  it("Donation 0 ended", async () => {  
+  it("Raffle 0 ended", async () => {  
     let balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);
 
@@ -376,11 +376,11 @@ describe("solana_donate", () => {
   console.log("Config is updated by dev", tx);
 
     tx = await program.methods
-      .endDonation(0, new BN(2000000000))
+      .endRaffle(0, new BN(2000000000))
       .accounts({
         authority: myKeypair.publicKey,
         globalState: myGlobalPDA,
-        donationInfo: donationPDA0,
+        raffleInfo: rafflePDA0,
         vault: vaultPDA,
         vaultState: vaultSPDA,
         systemProgram: web3.SystemProgram.programId,
@@ -388,7 +388,7 @@ describe("solana_donate", () => {
       .signers([myKeypair])
       .rpc();
 
-    console.log("Donation 0 is ended by dev", tx);
+    console.log("Raffle 0 is ended by dev", tx);
 
     balance = await provider.connection.getBalance(vaultPDA);
     console.log(`Vault balance: ${balance}`);

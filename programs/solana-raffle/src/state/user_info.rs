@@ -5,10 +5,10 @@ use anchor_lang::prelude::*;
 pub struct UserInfo {
     // User address
     pub user: Pubkey,
-    // Donation identifier
+    // Raffle identifier
     pub identifier: u8,
-    // Donated amount
-    pub donate_amount: u64,
-    // Donated time
-    pub donate_time: u64,
+    // Raffle amount
+    pub raffle_amount: u64,
+    // Raffle time
+    pub raffle_time: u64,
 }

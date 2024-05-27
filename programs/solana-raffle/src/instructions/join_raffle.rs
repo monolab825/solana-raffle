@@ -6,7 +6,7 @@ use crate::{state::*, constants::*, errors::*};
 
 #[derive(Accounts)]
 #[instruction(identifier: u8)]
-pub struct JoinDonation<'info> {
+pub struct JoinRaffle<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
 
@@ -24,10 +24,10 @@ pub struct JoinDonation<'info> {
 
     #[account(
         mut,
-        seeds = [DONATION_STATE_SEED, &identifier.to_le_bytes()],
+        seeds = [RAFFLE_STATE_SEED, &identifier.to_le_bytes()],
         bump,
     )]
-    pub donation_info: Box<Account<'info, DonationInfo>>,
+    pub raffle_info: Box<Account<'info, RaffleInfo>>,
 
     #[account(
         init_if_needed,
@@ -52,7 +52,7 @@ pub struct JoinDonation<'info> {
 }
 
 pub fn handle(
-    ctx: Context<JoinDonation>, 
+    ctx: Context<JoinRaffle>, 
     identifier: u8,
     amount: u64,
 ) -> Result<()> {
@@ -60,16 +60,16 @@ pub fn handle(
     
     let cur_timestamp = Clock::get()?.unix_timestamp as u64;
 
-    require!(cur_timestamp >= accts.donation_info.start_time, DonationError::DonationNotStarted);
-    require!(cur_timestamp <= accts.donation_info.end_time, DonationError::DonationEnded);
-    require!(accts.donation_info.donate_amount + amount <= accts.donation_info.hardcap_amount, DonationError::InsufficientHardcap);
+    require!(cur_timestamp >= accts.raffle_info.start_time, RaffleError::RaffleNotStarted);
+    require!(cur_timestamp <= accts.raffle_info.end_time, RaffleError::RaffleEnded);
+    require!(accts.raffle_info.raffle_amount + amount <= accts.raffle_info.hardcap_amount, RaffleError::InsufficientHardcap);
 
     accts.user_info.user = accts.user.key();
     accts.user_info.identifier = identifier;
-    accts.user_info.donate_amount += amount;
-    accts.user_info.donate_time = cur_timestamp;
+    accts.user_info.raffle_amount += amount;
+    accts.user_info.raffle_time = cur_timestamp;
     
-    accts.donation_info.donate_amount += amount;
+    accts.raffle_info.raffle_amount += amount;
 
     invoke(
         &system_instruction::transfer(
@@ -85,8 +85,8 @@ pub fn handle(
     )?;
     
     msg!(
-        "Donated successfully : {}",
-        accts.donation_info.donate_amount
+        "Raffle joined successfully : {}",
+        accts.raffle_info.raffle_amount
     );
 
     Ok(())

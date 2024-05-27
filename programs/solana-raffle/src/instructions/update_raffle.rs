@@ -5,7 +5,7 @@ use crate::constants::*;
 
 #[derive(Accounts)]
 #[instruction(_identifier: u8)]
-pub struct UpdateDonation<'info> {
+pub struct UpdateRaffle<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
 
@@ -20,18 +20,18 @@ pub struct UpdateDonation<'info> {
 
     #[account(
         mut,
-        seeds = [DONATION_STATE_SEED, &_identifier.to_le_bytes()],
+        seeds = [RAFFLE_STATE_SEED, &_identifier.to_le_bytes()],
         bump,
     )]
-    pub donation_info: Box<Account<'info, DonationInfo>>,
+    pub raffle_info: Box<Account<'info, RaffleInfo>>,
     
     // Must be included when initializing an account
     pub system_program: Program<'info, System>,
 }
 
-// Edit the details for a donation
+// Edit the details for a raffle
 pub fn handle(
-    ctx: Context<UpdateDonation>,
+    ctx: Context<UpdateRaffle>,
     _identifier: u8,
     softcap_amount: u64,
     hardcap_amount: u64,
@@ -40,13 +40,13 @@ pub fn handle(
 ) -> Result<()> {
     let accts = ctx.accounts;
 
-    accts.donation_info.softcap_amount = softcap_amount;
-    accts.donation_info.hardcap_amount = hardcap_amount;
-    accts.donation_info.start_time = start_time;
-    accts.donation_info.end_time = end_time;
+    accts.raffle_info.softcap_amount = softcap_amount;
+    accts.raffle_info.hardcap_amount = hardcap_amount;
+    accts.raffle_info.start_time = start_time;
+    accts.raffle_info.end_time = end_time;
 
     msg!(
-        "Donation has updated"
+        "Raffle has updated"
     );
 
     Ok(())

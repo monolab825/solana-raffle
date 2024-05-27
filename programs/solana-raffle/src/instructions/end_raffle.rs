@@ -7,7 +7,7 @@ use crate::{state::*, constants::*, errors::*};
 #[instruction(
     identifier: u8
 )]
-pub struct EndDonation<'info> {
+pub struct EndRaffle<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
 
@@ -22,10 +22,10 @@ pub struct EndDonation<'info> {
 
     #[account(
         mut,
-        seeds = [DONATION_STATE_SEED, &identifier.to_le_bytes()],
+        seeds = [RAFFLE_STATE_SEED, &identifier.to_le_bytes()],
         bump,
     )]
-    pub donation_info: Box<Account<'info, DonationInfo>>,
+    pub raffle_info: Box<Account<'info, RaffleInfo>>,
 
     #[account(
         mut,
@@ -49,13 +49,13 @@ pub struct EndDonation<'info> {
 }
 
 pub fn handle(
-    ctx: Context<EndDonation>,
+    ctx: Context<EndRaffle>,
     _identifier: u8,
     amount: u64
 ) -> Result<()> {
     let accts = ctx.accounts;
 
-    require!(accts.donation_info.donate_amount >= accts.donation_info.softcap_amount, DonationError::InsufficientSoftcap);
+    require!(accts.raffle_info.raffle_amount >= accts.raffle_info.softcap_amount, RaffleError::InsufficientSoftcap);
 
     invoke_signed(
         &system_instruction::transfer(
@@ -72,7 +72,7 @@ pub fn handle(
     )?;
 
     msg!(
-        "Donated ended"
+        "Raffle ended"
     );
 
     Ok(())

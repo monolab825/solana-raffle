@@ -7,8 +7,8 @@ pub struct GlobalState {
     pub authority: Pubkey,
     // Bool to avoid reinitialization attack
     pub is_initialized: bool,
-    // Donation stage
-    pub donation_stage: u8,
+    // Raffle stage
+    pub raffle_stage: u8,
     // Treasury
     pub vault: Pubkey
 }

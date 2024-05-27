@@ -7,9 +7,9 @@ pub mod instructions;
 
 use instructions::*;
 
-declare_id!("5FUbwgKyrnjHx5e3YTe5X8AJRQPdDvb4DmyMUkCc7US3");
+declare_id!("7BhKkim3e5Cfb8Krd4Sa82CvZ557t4kZfLVGfwrP76aR");
 #[program]
-pub mod solana_donate {
+pub mod solana_raffle {
     use super::*;
     
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -24,14 +24,14 @@ pub mod solana_donate {
         update_config::handle(ctx, is_initialized)
     }
 
-    pub fn create_donation(
-        ctx: Context<CreateDonation>,
+    pub fn create_raffle(
+        ctx: Context<CreateRaffle>,
         softcap_amount:u64,
         hardcap_amount:u64,
         start_time: u64,
         end_time: u64
     ) -> Result<()> {
-        create_donation::handle(
+        create_raffle::handle(
             ctx,
             softcap_amount,
             hardcap_amount,
@@ -40,15 +40,15 @@ pub mod solana_donate {
         )
     }
 
-    pub fn update_donation(
-        ctx: Context<UpdateDonation>,
+    pub fn update_raffle(
+        ctx: Context<UpdateRaffle>,
         identifier: u8,
         softcap_amount: u64,
         hardcap_amount: u64,
         start_time: u64,
         end_time: u64,
     ) -> Result<()> {
-        update_donation::handle(
+        update_raffle::handle(
             ctx,
             identifier,
             softcap_amount,
@@ -58,24 +58,24 @@ pub mod solana_donate {
         )
     }
 
-    pub fn join_donation(
-        ctx: Context<JoinDonation>, 
+    pub fn join_raffle(
+        ctx: Context<JoinRaffle>, 
         identifier: u8,
         amount: u64,
     ) -> Result<()> {
-        join_donation::handle(
+        join_raffle::handle(
             ctx,
             identifier,
             amount
         )
     }
 
-    pub fn end_donation(
-        ctx: Context<EndDonation>,
+    pub fn end_raffle(
+        ctx: Context<EndRaffle>,
         _identifier: u8,
         amount: u64
     ) -> Result<()> {
-        end_donation::handle(
+        end_raffle::handle(
             ctx,
             _identifier,
             amount

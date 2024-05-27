@@ -42,7 +42,7 @@ pub fn handle(ctx: Context<Initialize>) -> Result<()> {
     let accts = ctx.accounts;
     accts.global_state.authority = accts.authority.key();
     accts.global_state.is_initialized = true;
-    accts.global_state.donation_stage = 0;
+    accts.global_state.raffle_stage = 0;
     accts.global_state.vault = accts.vault.key();
     
     accts.vault_state.is_initialized = true;

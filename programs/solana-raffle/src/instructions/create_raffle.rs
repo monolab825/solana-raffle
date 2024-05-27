@@ -4,7 +4,7 @@ use crate::state::*;
 use crate::constants::*;
 
 #[derive(Accounts)]
-pub struct CreateDonation<'info> {
+pub struct CreateRaffle<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
 
@@ -19,18 +19,18 @@ pub struct CreateDonation<'info> {
 
     #[account(
         init_if_needed,
-        seeds = [DONATION_STATE_SEED, &global_state.donation_stage.to_le_bytes()],
+        seeds = [RAFFLE_STATE_SEED, &global_state.raffle_stage.to_le_bytes()],
         bump,
-        space = 8 + std::mem::size_of::<DonationInfo>(),
+        space = 8 + std::mem::size_of::<RaffleInfo>(),
         payer = authority,
     )]
-    pub donation_info: Box<Account<'info, DonationInfo>>,
+    pub raffle_info: Box<Account<'info, RaffleInfo>>,
 
     pub system_program: Program<'info, System>,
 }
 
 pub fn handle(
-    ctx: Context<CreateDonation>,
+    ctx: Context<CreateRaffle>,
     softcap_amount:u64,
     hardcap_amount:u64,
     start_time: u64,
@@ -38,18 +38,18 @@ pub fn handle(
 ) -> Result<()> {    
     let accts = ctx.accounts;
 
-    accts.donation_info.identifier = accts.global_state.donation_stage;
-    accts.donation_info.softcap_amount = softcap_amount;
-    accts.donation_info.hardcap_amount = hardcap_amount;
-    accts.donation_info.donate_amount = 0;
-    accts.donation_info.start_time = start_time;
-    accts.donation_info.end_time = end_time;
+    accts.raffle_info.identifier = accts.global_state.raffle_stage;
+    accts.raffle_info.softcap_amount = softcap_amount;
+    accts.raffle_info.hardcap_amount = hardcap_amount;
+    accts.raffle_info.raffle_amount = 0;
+    accts.raffle_info.start_time = start_time;
+    accts.raffle_info.end_time = end_time;
 
-    accts.global_state.donation_stage += 1;
+    accts.global_state.raffle_stage += 1;
     
     msg!(
-        "Donation has created : {}",
-        accts.donation_info.start_time
+        "Raffle has created : {}",
+        accts.raffle_info.start_time
     );
 
     Ok(())
